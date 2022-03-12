@@ -1,8 +1,8 @@
 const { promisify } = require('util')
-const Corestore = require('corestore')
+const Chainstore = require('@web4/chainstore')
 const ram = require('random-access-memory')
 
-const MountableHypertrie = require('../..')
+const MountableBittrie = require('../..')
 
 module.exports.create = async function (numTries, opts = {}) {
   const sparse = true
@@ -12,14 +12,14 @@ module.exports.create = async function (numTries, opts = {}) {
   const stores = []
 
   if (opts.sameStore) {
-    var mainStore = new Corestore((opts && opts._storage) || ram, { sparse, ifAvailable })
+    var mainStore = new Chainstore((opts && opts._storage) || ram, { sparse, ifAvailable })
   }
 
   for (let i = 0; i < numTries; i++) {
-    const store = mainStore ? mainStore : new Corestore((opts && opts._storage) || ram, { sparse, ifAvailable })
+    const store = mainStore ? mainStore : new Chainstore((opts && opts._storage) || ram, { sparse, ifAvailable })
     await store.ready()
     const feed = store.get()
-    const trie = new MountableHypertrie(store, null, { ...opts, sparse, feed })
+    const trie = new MountableBittrie(store, null, { ...opts, sparse, feed })
     await promisify(trie.ready.bind(trie))()
     tries.push(trie)
     stores.push(store)

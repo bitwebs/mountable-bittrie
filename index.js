@@ -1,9 +1,9 @@
 const p = require('path').posix
 const { EventEmitter } = require('events')
 
-const hypertrie = require('hypertrie')
-const HypercoreProtocol = require('hypercore-protocol')
-const hypercoreCrypto = require('hypercore-crypto')
+const bittrie = require('@web4/bittrie')
+const BitProtocol = require('@web4/bit-protocol')
+const bitwebCrypto = require('@web4/bitweb-crypto')
 const thunky = require('thunky')
 const nanoiterator = require('nanoiterator')
 const toStream = require('nanoiterator/to-stream')
@@ -17,29 +17,29 @@ const Flags = {
   MOUNT: 1
 }
 const MOUNT_PREFIX = '/mounts'
-const OWNER = Symbol('mountable-hypertrie-owner')
+const OWNER = Symbol('mountable-bittrie-owner')
 
-class MountableHypertrie extends Nanoresource {
-  constructor (corestore, key, opts = {}) {
+class MountableBittrie extends Nanoresource {
+  constructor (chainstore, key, opts = {}) {
     super()
     if (key && (typeof key === 'string')) key = Buffer.from(key, 'hex')
 
-    this.corestore = corestore
+    this.chainstore = chainstore
     this.key = key
-    this.discoveryKey = this.key ? hypercoreCrypto.discoveryKey(this.key) : null
+    this.discoveryKey = this.key ? bitwebCrypto.discoveryKey(this.key) : null
     this.opts = opts
     this.sparse = opts.sparse !== false
-    this.subtype = opts.subtype || 'mountable-hypertrie'
+    this.subtype = opts.subtype || 'mountable-bittrie'
 
-    if (opts.valueEncoding) throw new Error('MountableHypertrie does not currently support a valueEncoding option.')
+    if (opts.valueEncoding) throw new Error('MountableBittrie does not currently support a valueEncoding option.')
 
     var feed = this.opts.feed
-    if (!feed) feed = this.corestore.default({ key, ...this.opts })
+    if (!feed) feed = this.chainstore.default({ key, ...this.opts })
 
     if (feed[OWNER]) {
       this.trie = feed[OWNER]
     } else {
-      this.trie = opts.trie || hypertrie(null, {
+      this.trie = opts.trie || bittrie(null, {
         ...opts,
         feed,
         version: null,
@@ -79,7 +79,7 @@ class MountableHypertrie extends Nanoresource {
   }
 
   _open (cb) {
-    this.corestore.ready(err => {
+    this.chainstore.ready(err => {
       if (err) return cb(err)
       this.trie.ready(err => {
         if (err) return cb(err)
@@ -89,20 +89,20 @@ class MountableHypertrie extends Nanoresource {
         this.emit('feed', this.feed, {
           version: this.opts && this.opts.version
         })
-        this.emit('hypertrie', this.trie)
+        this.emit('bittrie', this.trie)
         return cb(null)
       })
     })
   }
 
   _close (cb) {
-    this.corestore.close(err => {
+    this.chainstore.close(err => {
       this.emit('close')
       return cb(err)
     })
   }
 
-  _createHypertrie (key, opts, cb) {
+  _createBittrie (key, opts, cb) {
     const self = this
 
     const keyString = key.toString('hex')
@@ -110,7 +110,7 @@ class MountableHypertrie extends Nanoresource {
     if (versionedTrie) return process.nextTick(cb, null, versionedTrie)
 
     try {
-      var subfeed = this.corestore.get({ ...opts, key,  version: null })
+      var subfeed = this.chainstore.get({ ...opts, key,  version: null })
     } catch (err) {
       err.badKey = true
       return cb(err)
@@ -120,7 +120,7 @@ class MountableHypertrie extends Nanoresource {
     if (opts && opts.cached) return cb(null, trie)
     var creating = !trie
 
-    trie = trie || new MountableHypertrie(this.corestore, key, {
+    trie = trie || new MountableBittrie(this.chainstore, key, {
       ...this.opts,
       feed: subfeed,
       sparse: this.sparse
@@ -128,11 +128,11 @@ class MountableHypertrie extends Nanoresource {
     self._tries.set(keyString, trie)
     if (creating) {
       const onfeed = (feed, opts) => this.emit('feed', feed, opts)
-      const ontrie = trie => this.emit('hypertrie', trie)
+      const ontrie = trie => this.emit('bittrie', trie)
       self._unlisteners.push(() => trie.removeListener('feed', onfeed))
-      self._unlisteners.push(() => trie.removeListener('hypertrie', ontrie))
+      self._unlisteners.push(() => trie.removeListener('bittrie', ontrie))
       trie.on('feed', onfeed)
-      trie.on('hypertrie', ontrie)
+      trie.on('bittrie', ontrie)
     }
 
     if (!trie.opened) {
@@ -168,7 +168,7 @@ class MountableHypertrie extends Nanoresource {
       return cb(err)
     }
 
-    this._createHypertrie(mountInfo.key, { ...opts, version: mountInfo.version }, (err, trie) => {
+    this._createBittrie(mountInfo.key, { ...opts, version: mountInfo.version }, (err, trie) => {
       if (err) return cb(err)
       return cb(null, trie, mountInfo)
     })
@@ -189,16 +189,16 @@ class MountableHypertrie extends Nanoresource {
   }
 
   _maybeSetSymbols (node, trie, mountInfo, innerPath) {
-    if (trie && !node[MountableHypertrie.Symbols.TRIE]) node[MountableHypertrie.Symbols.TRIE] = trie
-    if (mountInfo && !node[MountableHypertrie.Symbols.MOUNT]) node[MountableHypertrie.Symbols.MOUNT] = mountInfo
-    if (mountInfo && !node[MountableHypertrie.Symbols.INNER_PATH]) node[MountableHypertrie.Symbols.INNER_PATH] = innerPath
+    if (trie && !node[MountableBittrie.Symbols.TRIE]) node[MountableBittrie.Symbols.TRIE] = trie
+    if (mountInfo && !node[MountableBittrie.Symbols.MOUNT]) node[MountableBittrie.Symbols.MOUNT] = mountInfo
+    if (mountInfo && !node[MountableBittrie.Symbols.INNER_PATH]) node[MountableBittrie.Symbols.INNER_PATH] = innerPath
   }
 
   _getSymbols (node) {
     return {
-      trie: node[MountableHypertrie.Symbols.TRIE],
-      mount: node[MountableHypertrie.Symbols.MOUNT],
-      innerPath: node[MountableHypertrie.Symbols.INNER_PATH]
+      trie: node[MountableBittrie.Symbols.TRIE],
+      mount: node[MountableBittrie.Symbols.MOUNT],
+      innerPath: node[MountableBittrie.Symbols.INNER_PATH]
     }
   }
 
@@ -218,7 +218,7 @@ class MountableHypertrie extends Nanoresource {
   }
 
   static getMetadata (feed, cb) {
-    return hypertrie.getMetadata(feed, cb)
+    return bittrie.getMetadata(feed, cb)
   }
 
   getMetadata (cb) {
@@ -278,7 +278,7 @@ class MountableHypertrie extends Nanoresource {
       if (err) return cb(err)
       const innerPath = pathToMount(path, mountInfo)
       trie.get(innerPath, (err, node) => {
-        // If the subtrie is a MountableHypertrie, use the internal hypertrie for the batch.
+        // If the subtrie is a MountableBittrie, use the internal bittrie for the batch.
         if (trie.trie) trie = trie.trie
         return trie.batch([
           { type: 'del', key: p.join(MOUNT_PREFIX, innerPath), hidden: true },
@@ -465,7 +465,7 @@ class MountableHypertrie extends Nanoresource {
   }
 
   list (prefix, opts, cb) {
-    // Code duplicated from hypertrie.
+    // Code duplicated from bittrie.
     if (typeof prefix === 'function') return this.list('', null, prefix)
     if (typeof opts === 'function') return this.list(prefix, null, opts)
 
@@ -543,7 +543,7 @@ class MountableHypertrie extends Nanoresource {
   }
 
   checkout (version) {
-    return new MountableHypertrie(this.corestore, null, {
+    return new MountableBittrie(this.chainstore, null, {
       ...this.opts,
       trie: this.trie,
       feed: this.feed,
@@ -699,22 +699,22 @@ class MountableHypertrie extends Nanoresource {
   }
 
   replicate (isInitiator, opts) {
-    const stream = new HypercoreProtocol(isInitiator, { ...opts })
+    const stream = new BitProtocol(isInitiator, { ...opts })
     this.ready(err => {
       if (err) return stream.destroy(err)
-      this.corestore.replicate(isInitiator, { ...opts, stream })
+      this.chainstore.replicate(isInitiator, { ...opts, stream })
     })
     return stream
   }
 }
 
-MountableHypertrie.Symbols = MountableHypertrie.prototype.Symbols = {
+MountableBittrie.Symbols = MountableBittrie.prototype.Symbols = {
   TRIE: Symbol('trie'),
   MOUNT: Symbol('mount'),
   INNER_PATH: Symbol('inner-path')
 }
 
-module.exports = MountableHypertrie
+module.exports = MountableBittrie
 
 function putCondition (path, opts) {
   const userCondition = opts && opts.condition

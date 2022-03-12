@@ -1,14 +1,13 @@
-# mountable-hypertrie
-[![Build Status](https://travis-ci.com/andrewosh/mountable-hypertrie.svg?token=WgJmQm3Kc6qzq1pzYrkx&branch=master)](https://travis-ci.com/andrewosh/mountable-hypertrie)
+# @web4/mountable-bittrie
 
-A Hypertrie wrapper that supports mounting of sub-Hypertries.
+A Bittrie wrapper that supports mounting of sub-Bittries.
 
 ### Usage
-A MountableHypertrie can be mounted within another MountableHypertrie by using the `mount` command:
+A MountableBittrie can be mounted within another MountableBittrie by using the `mount` command:
 ```js
-const store = corestore(ram)
-const trie1 = new MountableHypertrie(store)
-const trie2 = new MountableHypertrie(store)
+const store = chainstore(ram)
+const trie1 = new MountableBittrie(store)
+const trie2 = new MountableBittrie(store)
 
 trie2.ready(() => {
   trie1.mount('/a', trie2.key, ...)
@@ -26,16 +25,16 @@ trie1.del('/a', err => {
 })
 ```
 ### API
-`mountable-hypertrie` re-exposes the [`hypertrie`](https://github.com/mafintosh/hypertrie) API, with the addition of the following methods (and a different constructor):
+`mountable-bittrie` re-exposes the [`bittrie`](https://github.com/bitwebs/bittrie) API, with the addition of the following methods (and a different constructor):
 
-#### `const trie = new MountableHypertrie(corestore, key, opts)`
-- `corestore`: any object that implements the corestore interface. For now, it's recommanded to use [`random-access-corestore`](https://github.com/andrewosh/random-access-corestore)
-- `key` is the hypertrie key
-- `opts` can contain any `hypertrie` options
+#### `const trie = new MountableBittrie(chainstore, key, opts)`
+- `chainstore`: any object that implements the chainstore interface. For now, it's recommanded to use [`random-access-chainstore`](https://github.com/bitwebs/random-access-chainstore)
+- `key` is the bittrie key
+- `opts` can contain any `bittrie` options
 
 #### `trie.mount(path, key, opts, cb)`
 - `path` is the mountpoint
-- `key` is the key for the MountableHypertrie to be mounted at `path`
+- `key` is the key for the MountableBittrie to be mounted at `path`
 
 `opts` can include:
 ```
@@ -45,7 +44,7 @@ trie1.del('/a', err => {
 }
 ```
 
-_Note: We're still adding support for many hypertrie methods. Here's what's been implemented so far:_
+_Note: We're still adding support for many bittrie methods. Here's what's been implemented so far:_
 
 - [x] `get`
 - [x] `put`

@@ -1,7 +1,7 @@
 {
-  "name": "mountable-hypertrie",
-  "version": "2.8.0",
-  "description": "A Hypertrie wrapper that supports mounting of other Hypertries",
+  "name": "@web4/mountable-bittrie",
+  "version": "1.0.0",
+  "description": "A Bittrie wrapper that supports mounting of other Bittries",
   "main": "index.js",
   "scripts": {
     "test": "tape test/*.js",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/andrewosh/mountable-hypertrie.git"
+    "url": "git+https://github.com/bitwebs/mountable-bittries.git"
   },
   "keywords": [
     "mount",
@@ -19,11 +19,11 @@
   "author": "Andrew Osheroff <andrewosh@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/andrewosh/mountable-hypertrie/issues"
+    "url": "https://github.com/bitwebs/mountable-bittries/issues"
   },
-  "homepage": "https://github.com/andrewosh/mountable-hypertrie#readme",
+  "homepage": "https://github.com/bitwebs/mountable-bittries#readme",
   "devDependencies": {
-    "corestore": "^5.0.0",
+    "@web4/chainstore": "^1.0.0",
     "raf": "^3.4.1",
     "random-access-memory": "^3.1.1",
     "rimraf": "^2.6.3",
@@ -32,9 +32,9 @@
     "tmp": "^0.1.0"
   },
   "dependencies": {
-    "hypercore-crypto": "^2.0.1",
-    "hypercore-protocol": "^8.0.0",
-    "hypertrie": "^5.0.0",
+    "@web4/bitweb-crypto": "^2.0.0",
+    "@web4/bit-protocol": "^1.0.0",
+    "@web4/bittrie": "^1.0.0",
     "is-options": "^1.0.1",
     "nanoiterator": "^1.2.0",
     "nanoresource": "^1.3.0",

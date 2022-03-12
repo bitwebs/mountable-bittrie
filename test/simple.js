@@ -5,7 +5,7 @@ const tmp = require('tmp')
 const { create } = require('./helpers/create')
 const { runAll } = require('./helpers/util')
 
-const MountableHypertrie = require('..')
+const MountableBittrie = require('..')
 
 test('simple single-trie get', async t => {
   const { tries } = await create(1)
@@ -355,19 +355,19 @@ test('recursive get node references the correct sub-trie', async t => {
       cb => rootTrie.get('/a/d', (err, node) => {
         if (err) return cb(err)
         t.true(node)
-        t.same(node[MountableHypertrie.Symbols.TRIE].key, subTrie.key)
+        t.same(node[MountableBittrie.Symbols.TRIE].key, subTrie.key)
         return cb(null)
       }),
       cb => rootTrie.get('/a/b/d', (err, node) => {
         if (err) return cb(err)
         t.true(node)
-        t.same(node[MountableHypertrie.Symbols.TRIE].key, subsubTrie.key)
+        t.same(node[MountableBittrie.Symbols.TRIE].key, subsubTrie.key)
         return cb(null)
       }),
       cb => rootTrie.get('/b', (err, node) => {
         if (err) return cb(err)
         t.true(node)
-        t.same(node[MountableHypertrie.Symbols.TRIE].key, rootTrie.key)
+        t.same(node[MountableBittrie.Symbols.TRIE].key, rootTrie.key)
         return cb(null)
       })
     ])
